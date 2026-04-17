@@ -32,21 +32,28 @@ class TelegramClient:
             proxy=proxy
         )
     def _restore_session_from_env(self):
-        session_string = os.getenv('TG_SESSION_STRING')
-        if session_string and not os.path.exists('session.session'):
-            session_data = base64.b64decode(session_string)
-            with open('session.session', 'wb') as f:
+        part1 = os.getenv('TG_SESSION_PART1')
+        part2 = os.getenv('TG_SESSION_PART2')
+        part3 = os.getenv('TG_SESSION_PART3')
+        volume_path = '/app/conn_tg/session_data/session.session'
+        local_path = os.path.join(os.path.dirname(__file__), 'session.session')
+        session_path = volume_path if os.path.exists('/app/conn_tg/session_data') else local_path
+        if part1 and part2 and part3 and not os.path.exists(session_path):
+            print("DEBUG: Reconstructing session from env variables...")
+            combined = part1 + part2 + part3
+            session_data = base64.b64decode(combined)
+            os.makedirs(os.path.dirname(session_path), exist_ok=True)
+            with open(session_path, 'wb') as f:
                 f.write(session_data)
+            print(f"✓ Session file restored to {session_path}")
     async def connect(self):
-        print(f"DEBUG: Starting client...")
-        try:
-            await self.client.start(phone=self.phone)
-            me = await self.client.get_me()
-            print(f"DEBUG: Logged in as: {me.first_name} ({me.username})")
-            return True
-        except Exception as e:
-            print(f"DEBUG: start() failed: {e}")
-            raise Exception(f"Session not authorized. Please authenticate first using simple_test.py locally. Error: {e}")
+        print(f"DEBUG: Connecting to Telegram...")
+        await self.client.connect()
+        if not await self.client.is_user_authorized():
+            raise Exception("Session not authorized. Run conn_tg/simple_test.py locally first.")
+        me = await self.client.get_me()
+        print(f"✓ Logged in as: {me.first_name} ({me.username})")
+        return True
     async def disconnect(self):
         await self.client.disconnect()
     async def get_channel_messages(self, channel_id, limit=10):
