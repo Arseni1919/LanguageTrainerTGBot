@@ -136,7 +136,7 @@ class TelegramClient:
             quiz=True,
             public_voters=False
         )
-        correct_answers = [str(correct_index).encode()]
+        correct_answers = [correct_index]
         try:
             result = await self.client.send_message(
                 channel_id,
