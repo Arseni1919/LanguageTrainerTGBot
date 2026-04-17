@@ -80,9 +80,9 @@ class TelegramClient:
             msg_data['links'] = list(dict.fromkeys(msg_data['links']))
             messages.append(msg_data)
         return messages
-    async def send_message(self, channel_id, text, buttons=None, parse_mode=None):
+    async def send_message(self, channel_id, text, buttons=None, parse_mode=None, formatting_entities=None):
         print(f"DEBUG: Sending message to {channel_id}, text length={len(text)}")
-        result = await self.client.send_message(channel_id, text, buttons=buttons, parse_mode=parse_mode)
+        result = await self.client.send_message(channel_id, text, buttons=buttons, parse_mode=parse_mode, formatting_entities=formatting_entities)
         print(f"✓ Message sent, id={result.id}")
         return result
     async def send_media(self, channel_id, media, caption='', parse_mode=None):

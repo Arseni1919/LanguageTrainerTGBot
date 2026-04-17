@@ -1,5 +1,6 @@
 import json
 import re
+from telethon import types
 from conn_ai.client import GeminiClient
 
 ai_client = GeminiClient()
@@ -28,8 +29,15 @@ async def send_vocabulary(tg_client, target_channel, arabic_text):
         vocab_data = json.loads(vocab_json)
         vocab_lines = [f"{item['emoji']} {item['arabic']} - {item['english']}\n{item['example']}" for item in vocab_data]
         vocab_text = '\n\n'.join(vocab_lines)
-        vocab_msg = f"المفردات المهمة:\n<tg-spoiler>{vocab_text}</tg-spoiler>"
-        await tg_client.send_message(target_channel, vocab_msg, parse_mode='HTML')
+        title = "المفردات المهمة:\n"
+        full_text = title + vocab_text
+        spoiler_offset = len(title)
+        spoiler_length = len(vocab_text)
+        await tg_client.send_message(
+            target_channel,
+            full_text,
+            formatting_entities=[types.MessageEntitySpoiler(offset=spoiler_offset, length=spoiler_length)]
+        )
         print(f"✓ Vocabulary sent ({len(vocab_data)} words)")
         return True
     except Exception as e:
@@ -37,8 +45,15 @@ async def send_vocabulary(tg_client, target_channel, arabic_text):
         return False
 
 async def send_original_text(tg_client, target_channel, original_text):
-    original_msg = f"النص الأصلي:\n<tg-spoiler>{original_text}</tg-spoiler>"
-    await tg_client.send_message(target_channel, original_msg, parse_mode='HTML')
+    title = "النص الأصلي:\n"
+    full_text = title + original_text
+    spoiler_offset = len(title)
+    spoiler_length = len(original_text)
+    await tg_client.send_message(
+        target_channel,
+        full_text,
+        formatting_entities=[types.MessageEntitySpoiler(offset=spoiler_offset, length=spoiler_length)]
+    )
     print("✓ Original text sent")
 
 async def send_quiz(tg_client, target_channel, arabic_text):
