@@ -92,22 +92,32 @@ class TelegramClient:
         return result
     async def send_poll(self, channel_id, question, options, correct_option_id=None):
         print(f"DEBUG: Sending poll to {channel_id}, question={question[:50]}..., options count={len(options)}, correct={correct_option_id}")
+        poll_answers = [
+            types.PollAnswer(text=opt, option=str(i).encode())
+            for i, opt in enumerate(options)
+        ]
         poll = types.Poll(
             id=0,
             hash=0,
             question=question,
-            answers=[types.PollAnswer(opt, bytes([i])) for i, opt in enumerate(options)],
-            quiz=True
+            answers=poll_answers,
+            quiz=True,
+            public_voters=False
         )
-        result = await self.client.send_message(
-            channel_id,
-            file=types.InputMediaPoll(
-                poll=poll,
-                correct_answers=[bytes([correct_option_id])] if correct_option_id is not None else None
+        correct_answers = [str(correct_option_id).encode()] if correct_option_id is not None else None
+        try:
+            result = await self.client.send_message(
+                channel_id,
+                file=types.InputMediaPoll(
+                    poll=poll,
+                    correct_answers=correct_answers
+                )
             )
-        )
-        print(f"✓ Poll sent, id={result.id}")
-        return result
+            print(f"✓ Poll sent, id={result.id}")
+            return result
+        except Exception as e:
+            print(f"✗ Quiz generation failed: {e}")
+            raise e
     def add_new_message_handler(self, handler, channel_ids):
         @self.client.on(events.NewMessage(chats=channel_ids))
         async def wrapper(event):
