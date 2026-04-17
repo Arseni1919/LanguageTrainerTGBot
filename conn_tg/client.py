@@ -121,7 +121,7 @@ class TelegramClient:
 
     async def send_dummy_poll(self, channel_id):
         print(f"DEBUG: Sending DUMMY QUIZ POLL to {channel_id}")
-        question = "ما هي عاصمة فرنسا؟"
+        question_text = "ما هي عاصمة فرنسا؟"
         options = ["برلين", "باريس", "مدريد", "روما"]
         correct_index = 1
         poll_answers = [
@@ -131,7 +131,7 @@ class TelegramClient:
         poll = types.Poll(
             id=0,
             hash=0,
-            question=question,
+            question=types.TextWithEntities(text=question_text, entities=[]),
             answers=poll_answers,
             quiz=True,
             public_voters=False
