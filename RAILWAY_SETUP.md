@@ -1,10 +1,10 @@
 # Railway Deployment Setup Guide
 
-## Problem: Session String Too Large
+## Solution: Session Split into 3 Environment Variables
 
-Railway has a 32KB limit for environment variables, but the Telegram session is ~37KB.
+Railway has a 32KB limit for environment variables, but the Telegram session is ~38KB in base64.
 
-**Solution**: Authenticate directly on Railway instead of using `TG_SESSION_STRING`.
+**Solution**: Split session into 3 parts (TG_SESSION_PART1/2/3), each ~12.7KB.
 
 ## Step-by-Step Deployment
 
@@ -17,7 +17,22 @@ git push origin main
 - Railway will detect the push and auto-deploy
 - Wait for build to complete
 
-### 3. Add Environment Variables
+### 3. Generate Session Parts
+
+Locally, authenticate first:
+```bash
+cd conn_tg
+python simple_test.py  # Enter Telegram code
+```
+
+Then split the session:
+```bash
+python split_session.py
+```
+
+Copy the 3 output lines (TG_SESSION_PART1/2/3).
+
+### 4. Add Environment Variables
 
 Go to Railway dashboard → Your project → Variables tab
 
@@ -27,42 +42,14 @@ TG_API_ID=33964731
 TG_API_HASH=c0557262d7ad3fd85ca03fcd0d1b0ada
 TG_PHONE=+972545833599
 TARGET_CHANNEL_ID=@your_channel_username
+TG_SESSION_PART1=<paste from split_session.py output>
+TG_SESSION_PART2=<paste from split_session.py output>
+TG_SESSION_PART3=<paste from split_session.py output>
 ```
 
-**DO NOT** add `TG_SESSION_STRING` (it's too large).
+### 5. Deploy (Automatic)
 
-### 4. Authenticate on Railway (One-Time Setup)
-
-#### Option A: Using Railway Shell
-1. Go to your service in Railway
-2. Click **"Shell"** tab (next to Deployments)
-3. Wait for shell to open
-4. Run:
-```bash
-cd conn_tg
-python simple_test.py
-```
-5. Check your Telegram app for login code
-6. Enter the code in Railway shell
-7. You should see: "✓ Authorized!"
-8. The session file is now saved on Railway
-9. Type `exit` to close shell
-
-#### Option B: Using Railway CLI (if shell doesn't work)
-```bash
-# On your local machine
-railway login
-railway link
-railway run bash
-cd conn_tg
-python simple_test.py
-# Enter code from Telegram
-```
-
-### 5. Restart Service
-- Go back to Deployments tab
-- Click "⋯" menu → "Restart"
-- Service restarts with saved session
+Railway will auto-deploy when it detects the push. Wait for deployment to complete.
 
 ### 6. Test the Endpoint
 
@@ -88,29 +75,27 @@ Check your target channel - you should see the latest post from @calcalist!
 
 ## Troubleshooting
 
-### "Session file not found"
-- Make sure you completed authentication in Railway shell
-- Check that session.session was created: `ls -la conn_tg/`
+### "FATAL: TG_SESSION_PART1/2/3 environment variables are required"
+- Make sure you added all 3 session parts to Railway environment variables
+- Verify no extra spaces or newlines in the values
+- Each part should be exactly 12744 characters
+
+### "Session not authorized"
+- Session file was reconstructed but is invalid
+- Re-generate session locally: `cd conn_tg && python simple_test.py`
+- Run `python split_session.py` again
+- Update the 3 Railway environment variables with new values
 
 ### "Connection to Telegram failed"
-- Railway doesn't block Telegram (unlike your work laptop)
+- Railway doesn't block Telegram (unlike some work networks)
 - Check environment variables are set correctly
-- Restart the service
-
-### "No such file or directory: conn_tg"
-- Your working directory might be different
-- Try: `cd /app/conn_tg`
-- Or: `python /app/conn_tg/simple_test.py`
-
-### Shell won't open
-- Use Railway CLI instead (Option B above)
-- Or deploy to another platform (Render, Fly.io)
+- Restart the service from Railway dashboard
 
 ## Important Notes
 
-- Session is stored in Railway's ephemeral file system
-- If Railway rebuilds/redeploys, you may need to re-authenticate
-- For persistent storage, consider using Railway volumes (paid feature)
+- Session reconstructed from env variables on every start
+- No persistent storage needed
+- If session expires, regenerate locally and update env vars
 - Keep your API keys secure - never commit them to git
 
 ## Next Steps

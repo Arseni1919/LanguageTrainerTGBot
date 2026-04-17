@@ -133,7 +133,7 @@ Follow-up quiz message with Telegram inline keyboard buttons (A/B/C/D options).
 **Environment Variables** (.env):
 - `TG_API_ID`, `TG_API_HASH`: Get from https://my.telegram.org
 - `TG_PHONE`: Your phone number
-- `TG_BOT_TOKEN`: Optional, if using bot account
+- `TG_SESSION_PART1/2/3`: Session split into 3 parts (use split_session.py to generate)
 - `GEMINI_API_KEY`: Get from Google AI Studio
 - `TARGET_CHANNEL_ID`: Your Arabic learning channel
 
