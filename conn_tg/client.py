@@ -94,6 +94,7 @@ class TelegramClient:
         print(f"DEBUG: Sending poll to {channel_id}, question={question[:50]}..., options count={len(options)}, correct={correct_option_id}")
         poll = types.Poll(
             id=0,
+            hash=0,
             question=question,
             answers=[types.PollAnswer(opt, bytes([i])) for i, opt in enumerate(options)],
             quiz=True
