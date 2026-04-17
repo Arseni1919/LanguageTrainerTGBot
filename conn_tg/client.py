@@ -38,7 +38,9 @@ class TelegramClient:
         volume_path = '/app/conn_tg/session_data/session.session'
         local_path = os.path.join(os.path.dirname(__file__), 'session.session')
         session_path = volume_path if os.path.exists('/app/conn_tg/session_data') else local_path
-        if part1 and part2 and part3 and not os.path.exists(session_path):
+        if not os.path.exists(session_path):
+            if not (part1 and part2 and part3):
+                raise Exception("FATAL: Session file not found and TG_SESSION_PART1/2/3 environment variables are missing. Cannot start without valid session.")
             print("DEBUG: Reconstructing session from env variables...")
             combined = part1 + part2 + part3
             session_data = base64.b64decode(combined)
