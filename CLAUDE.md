@@ -57,6 +57,8 @@ cd conn_ai && uv run python test.py    # Test Gemini AI
 
 ### Run API Server
 ```bash
+./start.sh  # Starts server and sends latest @calcalist post immediately
+# Or manually:
 uv run uvicorn api.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
@@ -64,6 +66,7 @@ uv run uvicorn api.main:app --reload --host 0.0.0.0 --port 8000
 ```bash
 curl http://localhost:8000/health
 curl http://localhost:8000/
+curl -X POST http://localhost:8000/fetch-and-post  # Manual trigger
 ```
 
 ## Implementation Phases
