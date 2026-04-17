@@ -52,12 +52,13 @@ LanguageTrainerTGBot/
 This project uses `uv` for Python package management.
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/Arseni1919/LanguageTrainerTGBot.git
 cd LanguageTrainerTGBot
-uv venv
+uv sync
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-uv pip install -r requirements.txt
 ```
+
+> **Note**: `uv sync` automatically creates a virtual environment and installs all dependencies from `pyproject.toml`
 
 ### 2. Get API Credentials
 

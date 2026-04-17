@@ -27,7 +27,6 @@ ENV/
 env.bak/
 venv.bak/
 .python-version
-uv.lock
 *.session
 *.session-journal
 .DS_Store

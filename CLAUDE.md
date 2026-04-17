@@ -44,9 +44,8 @@ This project uses `uv` for Python package management and environment isolation.
 
 ### Setup
 ```bash
-uv venv
+uv sync  # Creates venv and installs dependencies
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-uv pip install -r requirements.txt
 cp .env.example .env  # Then fill in your credentials
 ```
 
