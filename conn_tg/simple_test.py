@@ -17,7 +17,11 @@ async def main():
     proxy = None
     if proxy_host and proxy_port:
         proxy = (ProxyType.SOCKS5, proxy_host, int(proxy_port))
-    client = TelegramClient('session', api_id, api_hash, connection_retries=3, timeout=30, proxy=proxy)
+    volume_path = '/app/conn_tg/session_data/session'
+    local_path = 'session'
+    session_path = volume_path if os.path.exists('/app/conn_tg/session_data') else local_path
+    print(f"Using session path: {session_path}")
+    client = TelegramClient(session_path, api_id, api_hash, connection_retries=3, timeout=30, proxy=proxy)
     print("\nAttempting to connect...")
     try:
         await client.connect()
