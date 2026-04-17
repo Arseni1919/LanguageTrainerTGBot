@@ -57,13 +57,11 @@ async def startup_send_dummy_poll():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global tg_client
-    start_scheduler()
     tg_client = TelegramClient()
     await tg_client.connect()
     tg_client.add_new_message_handler(repost_message, SOURCE_CHANNELS)
     print(f"✓ Listening for new messages in {SOURCE_CHANNELS}")
-    asyncio.create_task(startup_fetch_and_post())
-    # asyncio.create_task(startup_send_dummy_poll())  # Keep for future testing
+    start_scheduler(tg_client)
     yield
     await tg_client.disconnect()
     shutdown_scheduler()
