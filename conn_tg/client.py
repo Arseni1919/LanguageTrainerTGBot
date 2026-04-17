@@ -1,7 +1,9 @@
 import os
 import base64
+import re
 from telethon import TelegramClient as TelethonClient, events
 from telethon.tl.types import MessageMediaPhoto, MessageMediaDocument
+from telethon.tl import types
 from dotenv import load_dotenv
 from python_socks import ProxyType
 load_dotenv()
@@ -71,12 +73,41 @@ class TelegramClient:
                 for entity in message.entities:
                     if hasattr(entity, 'url'):
                         msg_data['links'].append(entity.url)
+            url_pattern = r'https?://[^\s<>"{}|\\^`\[\]]+'
+            if message.text:
+                text_urls = re.findall(url_pattern, message.text)
+                msg_data['links'].extend(text_urls)
+            msg_data['links'] = list(dict.fromkeys(msg_data['links']))
             messages.append(msg_data)
         return messages
-    async def send_message(self, channel_id, text, buttons=None):
-        return await self.client.send_message(channel_id, text, buttons=buttons)
-    async def send_media(self, channel_id, media, caption=''):
-        return await self.client.send_file(channel_id, media, caption=caption)
+    async def send_message(self, channel_id, text, buttons=None, parse_mode=None):
+        print(f"DEBUG: Sending message to {channel_id}, parse_mode={parse_mode}, text length={len(text)}")
+        result = await self.client.send_message(channel_id, text, buttons=buttons, parse_mode=parse_mode)
+        print(f"✓ Message sent, id={result.id}")
+        return result
+    async def send_media(self, channel_id, media, caption='', parse_mode=None):
+        print(f"DEBUG: Sending media to {channel_id}, parse_mode={parse_mode}, caption length={len(caption)}")
+        result = await self.client.send_file(channel_id, media, caption=caption, parse_mode=parse_mode)
+        print(f"✓ Media sent, id={result.id}")
+        return result
+    async def send_poll(self, channel_id, question, options, correct_option_id=None):
+        print(f"DEBUG: Sending poll to {channel_id}, question={question[:50]}..., options count={len(options)}, correct={correct_option_id}")
+        result = await self.client.send_message(
+            channel_id,
+            file=None,
+            message='',
+            poll=types.InputMediaPoll(
+                poll=types.Poll(
+                    id=0,
+                    question=question,
+                    answers=[types.PollAnswer(text=opt, option=bytes([i])) for i, opt in enumerate(options)],
+                    quiz=True
+                ),
+                correct_answers=[bytes([correct_option_id])] if correct_option_id is not None else None
+            )
+        )
+        print(f"✓ Poll sent, id={result.id}")
+        return result
     def add_new_message_handler(self, handler, channel_ids):
         @self.client.on(events.NewMessage(chats=channel_ids))
         async def wrapper(event):
