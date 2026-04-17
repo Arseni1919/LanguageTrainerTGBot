@@ -1,13 +1,14 @@
 import os
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from dotenv import load_dotenv
 load_dotenv()
 
 class GeminiClient:
     def __init__(self):
         api_key = os.getenv('GEMINI_API_KEY')
-        genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel('gemini-pro')
+        self.client = genai.Client(api_key=api_key)
+        self.model = 'gemini-3-flash-preview'
     def translate_to_arabic(self, text, simple=True):
         complexity = "simple, easy-to-understand" if simple else "standard"
         prompt = f"""Translate the following text to {complexity} Arabic. Keep it natural and conversational.
@@ -15,7 +16,10 @@ class GeminiClient:
 Text: {text}
 
 Provide only the Arabic translation, nothing else."""
-        response = self.model.generate_content(prompt)
+        response = self.client.models.generate_content(
+            model=self.model,
+            contents=prompt
+        )
         return response.text.strip()
     def extract_vocabulary(self, text, count=5):
         prompt = f"""Extract {count} key vocabulary words from this Arabic text. For each word provide:
@@ -30,7 +34,10 @@ Format as JSON array:
 Arabic text: {text}
 
 Provide only the JSON array, nothing else."""
-        response = self.model.generate_content(prompt)
+        response = self.client.models.generate_content(
+            model=self.model,
+            contents=prompt
+        )
         return response.text.strip()
     def generate_quiz(self, arabic_text, options_count=4):
         prompt = f"""Based on this Arabic text, create a multiple choice question to test comprehension.
@@ -45,5 +52,8 @@ Provide the response in JSON format:
 }}
 
 Make the question meaningful and test actual understanding. Provide only the JSON, nothing else."""
-        response = self.model.generate_content(prompt)
+        response = self.client.models.generate_content(
+            model=self.model,
+            contents=prompt
+        )
         return response.text.strip()
