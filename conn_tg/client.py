@@ -125,7 +125,7 @@ class TelegramClient:
         options = ["برلين", "باريس", "مدريد", "روما"]
         correct_index = 1
         poll_answers = [
-            types.PollAnswer(text=opt, option=str(i).encode())
+            types.PollAnswer(text=types.TextWithEntities(text=opt, entities=[]), option=str(i).encode())
             for i, opt in enumerate(options)
         ]
         poll = types.Poll(
