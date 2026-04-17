@@ -28,8 +28,8 @@ async def send_vocabulary(tg_client, target_channel, arabic_text):
         vocab_data = json.loads(vocab_json)
         vocab_lines = [f"{item['emoji']} {item['arabic']} - {item['english']}\n{item['example']}" for item in vocab_data]
         vocab_text = '\n\n'.join(vocab_lines)
-        vocab_msg = f"المفردات المهمة:\n||{vocab_text}||"
-        await tg_client.send_message(target_channel, vocab_msg)
+        vocab_msg = f"المفردات المهمة:\n<tg-spoiler>{vocab_text}</tg-spoiler>"
+        await tg_client.send_message(target_channel, vocab_msg, parse_mode='HTML')
         print(f"✓ Vocabulary sent ({len(vocab_data)} words)")
         return True
     except Exception as e:
@@ -37,8 +37,8 @@ async def send_vocabulary(tg_client, target_channel, arabic_text):
         return False
 
 async def send_original_text(tg_client, target_channel, original_text):
-    original_msg = f"النص الأصلي:\n||{original_text}||"
-    await tg_client.send_message(target_channel, original_msg)
+    original_msg = f"النص الأصلي:\n<tg-spoiler>{original_text}</tg-spoiler>"
+    await tg_client.send_message(target_channel, original_msg, parse_mode='HTML')
     print("✓ Original text sent")
 
 async def send_quiz(tg_client, target_channel, arabic_text):
