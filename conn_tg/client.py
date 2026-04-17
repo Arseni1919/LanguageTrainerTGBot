@@ -92,17 +92,19 @@ class TelegramClient:
         return result
     async def send_poll(self, channel_id, question, options, correct_option_id=None):
         print(f"DEBUG: Sending poll to {channel_id}, question={question[:50]}..., options count={len(options)}, correct={correct_option_id}")
-        poll_media = types.InputMediaPoll(
-            poll=types.Poll(
-                id=0,
-                question=question,
-                answers=[types.PollAnswer(text=opt, option=bytes([i])) for i, opt in enumerate(options)],
-                quiz=True,
-                hash=0
-            ),
-            correct_answers=[bytes([correct_option_id])] if correct_option_id is not None else None
+        poll = types.Poll(
+            id=0,
+            question=question,
+            answers=[types.PollAnswer(opt, bytes([i])) for i, opt in enumerate(options)],
+            quiz=True
         )
-        result = await self.client.send_file(channel_id, poll_media)
+        result = await self.client.send_message(
+            channel_id,
+            file=types.InputMediaPoll(
+                poll=poll,
+                correct_answers=[bytes([correct_option_id])] if correct_option_id is not None else None
+            )
+        )
         print(f"✓ Poll sent, id={result.id}")
         return result
     def add_new_message_handler(self, handler, channel_ids):
