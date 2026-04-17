@@ -2,7 +2,7 @@ import os
 import asyncio
 from telethon import TelegramClient
 from dotenv import load_dotenv
-import socks
+from python_socks import ProxyType
 load_dotenv()
 api_id = int(os.getenv('TG_API_ID'))
 api_hash = os.getenv('TG_API_HASH')
@@ -16,7 +16,7 @@ print(f"Proxy: {proxy_host}:{proxy_port}" if proxy_host else "Proxy: None")
 async def main():
     proxy = None
     if proxy_host and proxy_port:
-        proxy = (socks.SOCKS5, proxy_host, int(proxy_port))
+        proxy = (ProxyType.SOCKS5, proxy_host, int(proxy_port))
     client = TelegramClient('test_session', api_id, api_hash, connection_retries=3, timeout=30, proxy=proxy)
     print("\nAttempting to connect...")
     try:

@@ -2,7 +2,7 @@ import os
 from telethon import TelegramClient as TelethonClient, events
 from telethon.tl.types import MessageMediaPhoto, MessageMediaDocument
 from dotenv import load_dotenv
-import socks
+from python_socks import ProxyType
 load_dotenv()
 
 class TelegramClient:
@@ -14,7 +14,7 @@ class TelegramClient:
         proxy_port = os.getenv('PROXY_PORT')
         proxy = None
         if proxy_host and proxy_port:
-            proxy = (socks.SOCKS5, proxy_host, int(proxy_port))
+            proxy = (ProxyType.SOCKS5, proxy_host, int(proxy_port))
         self.client = TelethonClient(
             'session',
             self.api_id,
