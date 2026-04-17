@@ -28,8 +28,8 @@ async def send_vocabulary(tg_client, target_channel, arabic_text):
         vocab_data = json.loads(vocab_json)
         vocab_lines = [f"{item['emoji']} {item['arabic']} - {item['english']}\n{item['example']}" for item in vocab_data]
         vocab_text = '\n\n'.join(vocab_lines)
-        vocab_msg = f"المفردات المهمة:\n<spoiler>{vocab_text}</spoiler>"
-        await tg_client.send_message(target_channel, vocab_msg, parse_mode='HTML')
+        vocab_msg = f"المفردات المهمة:\n||{vocab_text}||"
+        await tg_client.send_message(target_channel, vocab_msg)
         print(f"✓ Vocabulary sent ({len(vocab_data)} words)")
         return True
     except Exception as e:
@@ -37,8 +37,8 @@ async def send_vocabulary(tg_client, target_channel, arabic_text):
         return False
 
 async def send_original_text(tg_client, target_channel, original_text):
-    original_msg = f"النص الأصلي:\n<spoiler>{original_text}</spoiler>"
-    await tg_client.send_message(target_channel, original_msg, parse_mode='HTML')
+    original_msg = f"النص الأصلي:\n||{original_text}||"
+    await tg_client.send_message(target_channel, original_msg)
     print("✓ Original text sent")
 
 async def send_quiz(tg_client, target_channel, arabic_text):
@@ -58,9 +58,9 @@ async def process_and_post(tg_client, target_channel, original_text, media=None,
     arabic_text = translate_message(original_text, links)
     print(f"✓ Translation: {arabic_text[:50]}...")
     if media:
-        msg1 = await tg_client.send_media(target_channel, media, caption=arabic_text, parse_mode='HTML')
+        msg1 = await tg_client.send_media(target_channel, media, caption=arabic_text)
     else:
-        msg1 = await tg_client.send_message(target_channel, arabic_text, parse_mode='HTML')
+        msg1 = await tg_client.send_message(target_channel, arabic_text)
     await send_vocabulary(tg_client, target_channel, arabic_text)
     await send_original_text(tg_client, target_channel, original_text)
     await send_quiz(tg_client, target_channel, arabic_text)

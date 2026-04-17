@@ -81,12 +81,12 @@ class TelegramClient:
             messages.append(msg_data)
         return messages
     async def send_message(self, channel_id, text, buttons=None, parse_mode=None):
-        print(f"DEBUG: Sending message to {channel_id}, parse_mode={parse_mode}, text length={len(text)}")
+        print(f"DEBUG: Sending message to {channel_id}, text length={len(text)}")
         result = await self.client.send_message(channel_id, text, buttons=buttons, parse_mode=parse_mode)
         print(f"✓ Message sent, id={result.id}")
         return result
     async def send_media(self, channel_id, media, caption='', parse_mode=None):
-        print(f"DEBUG: Sending media to {channel_id}, parse_mode={parse_mode}, caption length={len(caption)}")
+        print(f"DEBUG: Sending media to {channel_id}, caption length={len(caption)}")
         result = await self.client.send_file(channel_id, media, caption=caption, parse_mode=parse_mode)
         print(f"✓ Media sent, id={result.id}")
         return result
@@ -101,7 +101,8 @@ class TelegramClient:
                     id=0,
                     question=question,
                     answers=[types.PollAnswer(text=opt, option=bytes([i])) for i, opt in enumerate(options)],
-                    quiz=True
+                    quiz=True,
+                    hash=0
                 ),
                 correct_answers=[bytes([correct_option_id])] if correct_option_id is not None else None
             )
