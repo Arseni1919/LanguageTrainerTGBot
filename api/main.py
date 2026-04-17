@@ -27,35 +27,39 @@ async def repost_message(event):
 
 async def startup_fetch_and_post():
     await asyncio.sleep(2)
-    print("=== STARTUP: Processing and posting latest message ===")
+    print("=== STARTUP: Processing and posting latest message to both channels ===")
     try:
+        from config.channels import TARGET_CHANNELS
         source_channel = SOURCE_CHANNELS[0]
         messages = await tg_client.get_channel_messages(source_channel, limit=1)
         if not messages:
             print(f"No messages found in {source_channel}")
             return
         latest_msg = messages[0]
-        target_channel = os.getenv('TARGET_CHANNEL_ID') or TARGET_CHANNEL_ID
+        print(f"✓ Fetched startup message id={latest_msg['id']}")
+        print("=== STARTUP: Processing Arabic ===")
         await process_and_post(
             tg_client,
-            target_channel,
+            TARGET_CHANNELS['arabic'],
             latest_msg['text'],
+            'Arabic',
             latest_msg.get('media', {}).get('media'),
             latest_msg.get('links', [])
         )
-        print(f"✓ Startup post completed from {source_channel} to {target_channel}")
+        print("=== STARTUP: Processing French ===")
+        await process_and_post(
+            tg_client,
+            TARGET_CHANNELS['french'],
+            latest_msg['text'],
+            'French',
+            latest_msg.get('media', {}).get('media'),
+            latest_msg.get('links', [])
+        )
+        print(f"✓ Startup posts completed to both channels")
     except Exception as e:
         print(f"✗ Startup post failed: {e}")
-
-async def startup_send_dummy_poll():
-    await asyncio.sleep(2)
-    print("=== STARTUP: Sending DUMMY QUIZ POLL ===")
-    try:
-        target_channel = os.getenv('TARGET_CHANNEL_ID') or TARGET_CHANNEL_ID
-        await tg_client.send_dummy_poll(target_channel)
-        print(f"✓ DUMMY QUIZ POLL startup completed to {target_channel}")
-    except Exception as e:
-        print(f"✗ DUMMY QUIZ POLL startup failed: {e}")
+        import traceback
+        traceback.print_exc()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -65,6 +69,7 @@ async def lifespan(app: FastAPI):
     tg_client.add_new_message_handler(repost_message, SOURCE_CHANNELS)
     print(f"✓ Listening for new messages in {SOURCE_CHANNELS}")
     start_scheduler(tg_client)
+    asyncio.create_task(startup_fetch_and_post())
     yield
     await tg_client.disconnect()
     shutdown_scheduler()
