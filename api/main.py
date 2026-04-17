@@ -3,37 +3,28 @@ from contextlib import asynccontextmanager
 import sys
 import os
 import asyncio
-import json
 sys.path.append('..')
 from api.scheduler import start_scheduler, shutdown_scheduler
 from conn_tg.client import TelegramClient
-from conn_ai.client import GeminiClient
 from config.channels import SOURCE_CHANNELS, TARGET_CHANNEL_ID
+from services.post_processor import process_and_post, extract_links
 
 tg_client = None
-ai_client = GeminiClient()
 
 async def repost_message(event):
-    target_channel = os.getenv('TARGET_CHANNEL_ID') or TARGET_CHANNEL_ID
     try:
-        text = event.message.text or 'No text content'
-        if event.message.media:
-            await tg_client.send_media(target_channel, event.message.media, caption=text)
-        else:
-            await tg_client.send_message(target_channel, text)
-        print(f"✓ Auto-reposted message from {event.chat.username or event.chat_id}")
+        original_text = event.message.text or 'No text content'
+        media = event.message.media
+        links = extract_links(original_text, event.message.entities)
+        target_channel = os.getenv('TARGET_CHANNEL_ID') or TARGET_CHANNEL_ID
+        await process_and_post(tg_client, target_channel, original_text, media, links)
+        print(f"✓ Auto-repost completed from {event.chat.username or event.chat_id}")
     except Exception as e:
         print(f"✗ Auto-repost failed: {e}")
 
 async def startup_fetch_and_post():
     await asyncio.sleep(2)
-    if not SOURCE_CHANNELS:
-        print("No source channels configured")
-        return
-    target_channel = os.getenv('TARGET_CHANNEL_ID') or TARGET_CHANNEL_ID
-    if target_channel == '@your_arabic_learning_channel':
-        print("TARGET_CHANNEL_ID not configured in .env")
-        return
+    print("=== STARTUP: Processing and posting latest message ===")
     try:
         source_channel = SOURCE_CHANNELS[0]
         messages = await tg_client.get_channel_messages(source_channel, limit=1)
@@ -41,15 +32,15 @@ async def startup_fetch_and_post():
             print(f"No messages found in {source_channel}")
             return
         latest_msg = messages[0]
-        text = latest_msg['text'] or 'No text content'
-        if latest_msg['media']:
-            if latest_msg['media']['type'] == 'photo':
-                await tg_client.send_media(target_channel, latest_msg['media']['media'], caption=text)
-            else:
-                await tg_client.send_message(target_channel, text)
-        else:
-            await tg_client.send_message(target_channel, text)
-        print(f"✓ Startup post sent from {source_channel} to {target_channel}")
+        target_channel = os.getenv('TARGET_CHANNEL_ID') or TARGET_CHANNEL_ID
+        await process_and_post(
+            tg_client,
+            target_channel,
+            latest_msg['text'],
+            latest_msg.get('media', {}).get('media'),
+            latest_msg.get('links', [])
+        )
+        print(f"✓ Startup post completed from {source_channel} to {target_channel}")
     except Exception as e:
         print(f"✗ Startup post failed: {e}")
 
@@ -87,61 +78,25 @@ async def fetch_and_post():
             print("ERROR: No messages found")
             return {"status": "error", "message": "No messages found"}
         latest_msg = messages[0]
-        original_text = latest_msg['text']
-        media = latest_msg.get('media')
-        links = latest_msg.get('links', [])
-        print(f"✓ Fetched message id={latest_msg['id']}, has_media={media is not None}, links_count={len(links)}")
-        print(f"Original text preview: {original_text[:100]}...")
-        print("=== STEP 2: Translating to Arabic ===")
-        arabic_text = ai_client.translate_to_arabic(original_text, simple=True)
-        print(f"✓ Translation complete: {arabic_text[:100]}...")
-        if links:
-            print(f"Adding link: {links[0]}")
-            arabic_text += f"\n\nرابط: {links[0]}"
+        print(f"✓ Fetched message id={latest_msg['id']}, has_media={latest_msg.get('media') is not None}, links_count={len(latest_msg.get('links', []))}")
+        print(f"Original text preview: {latest_msg['text'][:100]}...")
+        print("=== STEP 2-6: Processing with AI and posting ===")
         target_channel = os.getenv('TARGET_CHANNEL_ID') or TARGET_CHANNEL_ID
         print(f"Target channel: {target_channel}")
-        print("=== STEP 3: Sending main message (Arabic + media) ===")
-        if media:
-            print(f"Sending with media type: {media['type']}")
-            msg1 = await tg_client.send_media(target_channel, media['media'], caption=arabic_text, parse_mode='HTML')
-        else:
-            print("Sending text only")
-            msg1 = await tg_client.send_message(target_channel, arabic_text, parse_mode='HTML')
-        print("=== STEP 4: Extracting vocabulary ===")
-        try:
-            vocab_json = ai_client.extract_vocabulary(arabic_text, count=5)
-            print(f"✓ Vocabulary JSON: {vocab_json[:200]}...")
-            vocab_data = json.loads(vocab_json)
-            print(f"✓ Parsed {len(vocab_data)} vocabulary items")
-            vocab_lines = [f"{item['emoji']} {item['arabic']} - {item['english']}\n{item['example']}" for item in vocab_data]
-            vocab_text = '\n\n'.join(vocab_lines)
-            vocab_msg = f"المفردات المهمة:\n<spoiler>{vocab_text}</spoiler>"
-            print("Sending vocabulary message with spoiler...")
-            await tg_client.send_message(target_channel, vocab_msg, parse_mode='HTML')
-        except Exception as e:
-            print(f"✗ Vocabulary extraction failed: {e}")
-        print("=== STEP 5: Sending original text ===")
-        original_msg = f"النص الأصلي:\n<spoiler>{original_text}</spoiler>"
-        await tg_client.send_message(target_channel, original_msg, parse_mode='HTML')
-        print("=== STEP 6: Generating and sending quiz ===")
-        try:
-            quiz_json = ai_client.generate_quiz(arabic_text, options_count=4)
-            print(f"✓ Quiz JSON: {quiz_json[:200]}...")
-            quiz_data = json.loads(quiz_json)
-            print(f"✓ Quiz question: {quiz_data['question']}")
-            print(f"✓ Options: {quiz_data['options']}")
-            print(f"✓ Correct index: {quiz_data['correct_index']}")
-            await tg_client.send_poll(target_channel, quiz_data['question'], quiz_data['options'], quiz_data['correct_index'])
-        except Exception as e:
-            print(f"✗ Quiz generation failed: {e}")
+        msg1 = await process_and_post(
+            tg_client,
+            target_channel,
+            latest_msg['text'],
+            latest_msg.get('media', {}).get('media'),
+            latest_msg.get('links', [])
+        )
         print("=== SUCCESS: All messages sent ===")
         return {
             "status": "success",
             "source": source_channel,
             "target": target_channel,
             "message_id": msg1.id,
-            "original_text": original_text[:100],
-            "arabic_text": arabic_text[:100]
+            "original_text": latest_msg['text'][:100],
         }
     except Exception as e:
         print(f"✗✗✗ FATAL ERROR in fetch_and_post: {e}")
