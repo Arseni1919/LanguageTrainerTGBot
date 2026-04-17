@@ -34,8 +34,10 @@ class TelegramClient:
             with open('session.session', 'wb') as f:
                 f.write(session_data)
     async def connect(self):
-        await self.client.start(phone=self.phone)
-        return await self.client.is_user_authorized()
+        await self.client.connect()
+        if not await self.client.is_user_authorized():
+            raise Exception("Session not authorized. Please authenticate first using simple_test.py locally.")
+        return True
     async def disconnect(self):
         await self.client.disconnect()
     async def get_channel_messages(self, channel_id, limit=10):
