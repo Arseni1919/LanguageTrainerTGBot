@@ -30,6 +30,7 @@ venv.bak/
 *.session
 *.session-journal
 RAILWAY_ENV_VARS.txt
+.railway-url
 .DS_Store
 .idea/
 .vscode/
