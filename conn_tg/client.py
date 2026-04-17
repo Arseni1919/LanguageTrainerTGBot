@@ -2,6 +2,7 @@ import os
 from telethon import TelegramClient as TelethonClient, events
 from telethon.tl.types import MessageMediaPhoto, MessageMediaDocument
 from dotenv import load_dotenv
+import socks
 load_dotenv()
 
 class TelegramClient:
@@ -9,7 +10,20 @@ class TelegramClient:
         self.api_id = int(os.getenv('TG_API_ID'))
         self.api_hash = os.getenv('TG_API_HASH')
         self.phone = os.getenv('TG_PHONE')
-        self.client = TelethonClient('session', self.api_id, self.api_hash)
+        proxy_host = os.getenv('PROXY_HOST')
+        proxy_port = os.getenv('PROXY_PORT')
+        proxy = None
+        if proxy_host and proxy_port:
+            proxy = (socks.SOCKS5, proxy_host, int(proxy_port))
+        self.client = TelethonClient(
+            'session',
+            self.api_id,
+            self.api_hash,
+            connection_retries=10,
+            retry_delay=1,
+            timeout=10,
+            proxy=proxy
+        )
     async def connect(self):
         await self.client.start(phone=self.phone)
         return await self.client.is_user_authorized()

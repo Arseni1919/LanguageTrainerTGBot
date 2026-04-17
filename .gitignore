@@ -36,3 +36,4 @@ uv.lock
 *.swp
 *.swo
 *~
+initial_prompt.txt
