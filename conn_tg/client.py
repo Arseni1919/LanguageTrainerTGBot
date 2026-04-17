@@ -1,4 +1,5 @@
 import os
+import base64
 from telethon import TelegramClient as TelethonClient, events
 from telethon.tl.types import MessageMediaPhoto, MessageMediaDocument
 from dotenv import load_dotenv
@@ -10,6 +11,7 @@ class TelegramClient:
         self.api_id = int(os.getenv('TG_API_ID'))
         self.api_hash = os.getenv('TG_API_HASH')
         self.phone = os.getenv('TG_PHONE')
+        self._restore_session_from_env()
         proxy_host = os.getenv('PROXY_HOST')
         proxy_port = os.getenv('PROXY_PORT')
         proxy = None
@@ -24,6 +26,12 @@ class TelegramClient:
             timeout=10,
             proxy=proxy
         )
+    def _restore_session_from_env(self):
+        session_string = os.getenv('TG_SESSION_STRING')
+        if session_string and not os.path.exists('session.session'):
+            session_data = base64.b64decode(session_string)
+            with open('session.session', 'wb') as f:
+                f.write(session_data)
     async def connect(self):
         await self.client.start(phone=self.phone)
         return await self.client.is_user_authorized()
