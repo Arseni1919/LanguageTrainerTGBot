@@ -1,4 +1,8 @@
 SOURCE_CHANNELS = [
     '@calcalist',
 ]
-TARGET_CHANNEL_ID = '@your_arabic_learning_channel'
+
+TARGET_CHANNELS = {
+    'arabic': '@calcalist_arabic',
+    'french': '@calcalist_french'
+}
