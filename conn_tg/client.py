@@ -18,6 +18,8 @@ class TelegramClient:
         if proxy_host and proxy_port:
             proxy = (ProxyType.SOCKS5, proxy_host, int(proxy_port))
         session_path = os.path.join(os.path.dirname(__file__), 'session')
+        print(f"DEBUG: Looking for session at: {session_path}")
+        print(f"DEBUG: Session file exists: {os.path.exists(session_path + '.session')}")
         self.client = TelethonClient(
             session_path,
             self.api_id,
