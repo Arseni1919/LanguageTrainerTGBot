@@ -37,7 +37,15 @@ class TelegramClient:
                 f.write(session_data)
     async def connect(self):
         await self.client.connect()
-        if not await self.client.is_user_authorized():
+        print(f"DEBUG: Connected to Telegram")
+        is_auth = await self.client.is_user_authorized()
+        print(f"DEBUG: is_user_authorized() returned: {is_auth}")
+        if not is_auth:
+            try:
+                me = await self.client.get_me()
+                print(f"DEBUG: get_me() returned: {me}")
+            except Exception as e:
+                print(f"DEBUG: get_me() failed: {e}")
             raise Exception("Session not authorized. Please authenticate first using simple_test.py locally.")
         return True
     async def disconnect(self):
