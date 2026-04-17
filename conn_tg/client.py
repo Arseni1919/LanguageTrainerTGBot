@@ -85,26 +85,29 @@ class TelegramClient:
         result = await self.client.send_message(channel_id, text, buttons=buttons, parse_mode=parse_mode, formatting_entities=formatting_entities)
         print(f"✓ Message sent, id={result.id}")
         return result
-    async def send_media(self, channel_id, media, caption='', parse_mode=None):
+    async def send_media(self, channel_id, media, caption='', parse_mode=None, formatting_entities=None):
         print(f"DEBUG: Sending media to {channel_id}, caption length={len(caption)}")
-        result = await self.client.send_file(channel_id, media, caption=caption, parse_mode=parse_mode)
+        result = await self.client.send_file(channel_id, media, caption=caption, parse_mode=parse_mode, formatting_entities=formatting_entities)
         print(f"✓ Media sent, id={result.id}")
         return result
     async def send_poll(self, channel_id, question, options, correct_option_id=None):
         print(f"DEBUG: Sending poll to {channel_id}, question={question[:50]}..., options count={len(options)}, correct={correct_option_id}")
         poll_answers = [
-            types.PollAnswer(text=opt, option=str(i).encode())
+            types.PollAnswer(
+                text=types.TextWithEntities(text=opt, entities=[]),
+                option=str(i).encode()
+            )
             for i, opt in enumerate(options)
         ]
         poll = types.Poll(
             id=0,
             hash=0,
-            question=question,
+            question=types.TextWithEntities(text=question, entities=[]),
             answers=poll_answers,
             quiz=True,
             public_voters=False
         )
-        correct_answers = [str(correct_option_id).encode()] if correct_option_id is not None else None
+        correct_answers = [correct_option_id] if correct_option_id is not None else None
         try:
             result = await self.client.send_message(
                 channel_id,

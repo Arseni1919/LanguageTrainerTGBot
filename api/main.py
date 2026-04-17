@@ -62,8 +62,8 @@ async def lifespan(app: FastAPI):
     await tg_client.connect()
     tg_client.add_new_message_handler(repost_message, SOURCE_CHANNELS)
     print(f"✓ Listening for new messages in {SOURCE_CHANNELS}")
-    # asyncio.create_task(startup_fetch_and_post())  # Commented for poll testing
-    asyncio.create_task(startup_send_dummy_poll())
+    asyncio.create_task(startup_fetch_and_post())
+    # asyncio.create_task(startup_send_dummy_poll())  # Keep for future testing
     yield
     await tg_client.disconnect()
     shutdown_scheduler()

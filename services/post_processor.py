@@ -19,42 +19,28 @@ def extract_links(text, entities=None):
 
 def translate_message(original_text, links):
     arabic_text = ai_client.translate_to_arabic(original_text, simple=True)
-    if links:
-        arabic_text += f"\n\nرابط: {links[0]}"
     return arabic_text
 
-async def send_vocabulary(tg_client, target_channel, arabic_text):
-    try:
-        vocab_json = ai_client.extract_vocabulary(arabic_text, count=5)
-        vocab_data = json.loads(vocab_json)
-        vocab_lines = [f"{item['emoji']} {item['arabic']} - {item['english']}\n{item['example']}" for item in vocab_data]
-        vocab_text = '\n\n'.join(vocab_lines)
-        title = "المفردات المهمة:\n"
-        full_text = title + vocab_text
-        spoiler_offset = len(title)
-        spoiler_length = len(vocab_text)
-        await tg_client.send_message(
-            target_channel,
-            full_text,
-            formatting_entities=[types.MessageEntitySpoiler(offset=spoiler_offset, length=spoiler_length)]
-        )
-        print(f"✓ Vocabulary sent ({len(vocab_data)} words)")
-        return True
-    except Exception as e:
-        print(f"✗ Vocabulary extraction failed: {e}")
-        return False
-
-async def send_original_text(tg_client, target_channel, original_text):
-    title = "النص الأصلي:\n"
-    full_text = title + original_text
-    spoiler_offset = len(title)
-    spoiler_length = len(original_text)
-    await tg_client.send_message(
-        target_channel,
-        full_text,
-        formatting_entities=[types.MessageEntitySpoiler(offset=spoiler_offset, length=spoiler_length)]
-    )
-    print("✓ Original text sent")
+def build_combined_message(arabic_text, vocab_data, original_text, links):
+    message_parts = []
+    message_parts.append(arabic_text)
+    if links:
+        message_parts.append(f"\n\nرابط: {links[0]}")
+    vocab_lines = [f"{item['emoji']} {item['arabic']} - {item['english']}\n{item['example']}" for item in vocab_data]
+    vocab_text = '\n\n'.join(vocab_lines)
+    vocab_section = f"\n\nالمفردات المهمة:\n{vocab_text}"
+    original_section = f"\n\nالنص الأصلي:\n{original_text}"
+    full_text = ''.join(message_parts) + vocab_section + original_section
+    title_length = len(''.join(message_parts))
+    vocab_start = title_length + len("\n\nالمفردات المهمة:\n")
+    vocab_length = len(vocab_text)
+    original_start = vocab_start + vocab_length + len("\n\nالنص الأصلي:\n")
+    original_length = len(original_text)
+    entities = [
+        types.MessageEntitySpoiler(offset=vocab_start, length=vocab_length),
+        types.MessageEntitySpoiler(offset=original_start, length=original_length)
+    ]
+    return full_text, entities
 
 async def send_quiz(tg_client, target_channel, arabic_text):
     try:
@@ -72,11 +58,18 @@ async def process_and_post(tg_client, target_channel, original_text, media=None,
         links = []
     arabic_text = translate_message(original_text, links)
     print(f"✓ Translation: {arabic_text[:50]}...")
+    try:
+        vocab_json = ai_client.extract_vocabulary(arabic_text, count=5)
+        vocab_data = json.loads(vocab_json)
+        print(f"✓ Vocabulary extracted ({len(vocab_data)} words)")
+    except Exception as e:
+        print(f"✗ Vocabulary extraction failed: {e}")
+        vocab_data = []
+    full_text, entities = build_combined_message(arabic_text, vocab_data, original_text, links)
     if media:
-        msg1 = await tg_client.send_media(target_channel, media, caption=arabic_text)
+        msg1 = await tg_client.send_media(target_channel, media, caption=full_text, formatting_entities=entities)
     else:
-        msg1 = await tg_client.send_message(target_channel, arabic_text)
-    await send_vocabulary(tg_client, target_channel, arabic_text)
-    await send_original_text(tg_client, target_channel, original_text)
+        msg1 = await tg_client.send_message(target_channel, full_text, formatting_entities=entities)
+    print("✓ Combined message sent")
     await send_quiz(tg_client, target_channel, arabic_text)
     return msg1
