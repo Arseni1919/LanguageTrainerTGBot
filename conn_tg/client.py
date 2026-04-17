@@ -72,3 +72,9 @@ class TelegramClient:
         return await self.client.send_message(channel_id, text, buttons=buttons)
     async def send_media(self, channel_id, media, caption=''):
         return await self.client.send_file(channel_id, media, caption=caption)
+    def add_new_message_handler(self, handler, channel_ids):
+        @self.client.on(events.NewMessage(chats=channel_ids))
+        async def wrapper(event):
+            await handler(event)
+    async def run_until_disconnected(self):
+        await self.client.run_until_disconnected()
