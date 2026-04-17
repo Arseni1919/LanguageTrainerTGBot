@@ -118,6 +118,41 @@ class TelegramClient:
         except Exception as e:
             print(f"✗ Quiz generation failed: {e}")
             raise e
+
+    async def send_dummy_poll(self, channel_id):
+        print(f"DEBUG: Sending DUMMY QUIZ POLL to {channel_id}")
+        question = "ما هي عاصمة فرنسا؟"
+        options = ["برلين", "باريس", "مدريد", "روما"]
+        correct_index = 1
+        poll_answers = [
+            types.PollAnswer(text=opt, option=str(i).encode())
+            for i, opt in enumerate(options)
+        ]
+        poll = types.Poll(
+            id=0,
+            hash=0,
+            question=question,
+            answers=poll_answers,
+            quiz=True,
+            public_voters=False
+        )
+        correct_answers = [str(correct_index).encode()]
+        try:
+            result = await self.client.send_message(
+                channel_id,
+                file=types.InputMediaPoll(
+                    poll=poll,
+                    correct_answers=correct_answers
+                )
+            )
+            print(f"✓ DUMMY QUIZ POLL sent, id={result.id}")
+            return result
+        except Exception as e:
+            print(f"✗ DUMMY QUIZ POLL FAILED: {e}")
+            import traceback
+            traceback.print_exc()
+            raise e
+
     def add_new_message_handler(self, handler, channel_ids):
         @self.client.on(events.NewMessage(chats=channel_ids))
         async def wrapper(event):

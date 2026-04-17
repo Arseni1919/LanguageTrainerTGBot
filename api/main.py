@@ -44,6 +44,16 @@ async def startup_fetch_and_post():
     except Exception as e:
         print(f"✗ Startup post failed: {e}")
 
+async def startup_send_dummy_poll():
+    await asyncio.sleep(2)
+    print("=== STARTUP: Sending DUMMY QUIZ POLL ===")
+    try:
+        target_channel = os.getenv('TARGET_CHANNEL_ID') or TARGET_CHANNEL_ID
+        await tg_client.send_dummy_poll(target_channel)
+        print(f"✓ DUMMY QUIZ POLL startup completed to {target_channel}")
+    except Exception as e:
+        print(f"✗ DUMMY QUIZ POLL startup failed: {e}")
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global tg_client
@@ -52,7 +62,8 @@ async def lifespan(app: FastAPI):
     await tg_client.connect()
     tg_client.add_new_message_handler(repost_message, SOURCE_CHANNELS)
     print(f"✓ Listening for new messages in {SOURCE_CHANNELS}")
-    asyncio.create_task(startup_fetch_and_post())
+    # asyncio.create_task(startup_fetch_and_post())  # Commented for poll testing
+    asyncio.create_task(startup_send_dummy_poll())
     yield
     await tg_client.disconnect()
     shutdown_scheduler()
