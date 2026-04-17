@@ -17,9 +17,7 @@ class TelegramClient:
         proxy = None
         if proxy_host and proxy_port:
             proxy = (ProxyType.SOCKS5, proxy_host, int(proxy_port))
-        volume_path = '/app/conn_tg/session_data/session'
-        local_path = os.path.join(os.path.dirname(__file__), 'session')
-        session_path = volume_path if os.path.exists('/app/conn_tg/session_data') else local_path
+        session_path = os.path.join(os.path.dirname(__file__), 'session')
         print(f"DEBUG: Looking for session at: {session_path}")
         print(f"DEBUG: Session file exists: {os.path.exists(session_path + '.session')}")
         self.client = TelethonClient(
@@ -35,19 +33,16 @@ class TelegramClient:
         part1 = os.getenv('TG_SESSION_PART1')
         part2 = os.getenv('TG_SESSION_PART2')
         part3 = os.getenv('TG_SESSION_PART3')
-        volume_path = '/app/conn_tg/session_data/session.session'
+        if not (part1 and part2 and part3):
+            raise Exception("FATAL: TG_SESSION_PART1/2/3 environment variables are required. Cannot start without valid session.")
         local_path = os.path.join(os.path.dirname(__file__), 'session.session')
-        session_path = volume_path if os.path.exists('/app/conn_tg/session_data') else local_path
-        if not os.path.exists(session_path):
-            if not (part1 and part2 and part3):
-                raise Exception("FATAL: Session file not found and TG_SESSION_PART1/2/3 environment variables are missing. Cannot start without valid session.")
+        if not os.path.exists(local_path):
             print("DEBUG: Reconstructing session from env variables...")
             combined = part1 + part2 + part3
             session_data = base64.b64decode(combined)
-            os.makedirs(os.path.dirname(session_path), exist_ok=True)
-            with open(session_path, 'wb') as f:
+            with open(local_path, 'wb') as f:
                 f.write(session_data)
-            print(f"✓ Session file restored to {session_path}")
+            print(f"✓ Session file restored to {local_path}")
     async def connect(self):
         print(f"DEBUG: Connecting to Telegram...")
         await self.client.connect()
