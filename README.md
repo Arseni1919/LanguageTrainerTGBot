@@ -162,20 +162,67 @@ See [CLAUDE.md](CLAUDE.md) for detailed development guide and implementation pha
 - ✅ Phase 1: TG Connection
 - ✅ Phase 2: AI Connection
 - ✅ Phase 3: API Basic Setup
-- ⏳ Phase 4: API + TG Integration
+- ✅ Phase 4: API + TG Integration (Basic repost from @calcalist)
 - ⏳ Phase 5: Full Pipeline (Translation + Quiz)
 - ⏳ Phase 6: Fine-tuning
-- ⏳ Phase 7: Deployment
+- ✅ Phase 7: Deployment (Railway ready)
 
 ## Deployment
 
-The bot is designed to be deployed on platforms with GitHub integration:
-- Railway
-- Render
-- Fly.io
-- Heroku
+### Railway Deployment
 
-Deployment steps will be added in Phase 7.
+1. **Connect GitHub Repository**
+   - Go to [Railway](https://railway.app/)
+   - Create new project from GitHub repo
+   - Select `Arseni1919/LanguageTrainerTGBot`
+
+2. **Add Environment Variables**
+
+   In Railway dashboard, add these variables:
+   ```
+   TG_API_ID=your_api_id
+   TG_API_HASH=your_api_hash
+   TG_PHONE=+972XXXXXXXXX
+   TARGET_CHANNEL_ID=@your_channel
+   ```
+
+   **Important**: Don't add `TG_SESSION_STRING` - session is too large for Railway env vars.
+
+3. **Deploy**
+   - Railway auto-deploys on push to main
+   - Wait for deployment to complete
+
+4. **Authenticate on Railway (One-time)**
+
+   Open Railway Shell:
+   - Click your service → Shell tab
+   - Run:
+   ```bash
+   cd conn_tg
+   python simple_test.py
+   ```
+   - Enter the code from your Telegram app
+   - Session file will be saved on Railway
+   - Exit shell
+
+5. **Restart Service**
+   - Go back to Deployments
+   - Click "Restart"
+   - App will now use the saved session
+
+6. **Test the Endpoint**
+   ```bash
+   curl -X POST https://your-app.railway.app/fetch-and-post
+   ```
+
+   This fetches the latest post from @calcalist and posts to your channel.
+
+5. **Check Logs**
+   - View logs in Railway dashboard to verify deployment
+
+### Other Platforms
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed deployment guides for Render, Fly.io, and Docker.
 
 ## Contributing
 

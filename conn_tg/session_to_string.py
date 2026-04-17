@@ -2,7 +2,7 @@ import os
 import base64
 from dotenv import load_dotenv
 load_dotenv()
-session_file = 'session.session'
+session_file = 'test_session.session'
 if os.path.exists(session_file):
     with open(session_file, 'rb') as f:
         session_data = f.read()

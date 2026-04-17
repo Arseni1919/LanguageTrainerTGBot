@@ -29,6 +29,7 @@ venv.bak/
 .python-version
 *.session
 *.session-journal
+RAILWAY_ENV_VARS.txt
 .DS_Store
 .idea/
 .vscode/
