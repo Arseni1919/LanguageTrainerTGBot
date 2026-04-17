@@ -17,8 +17,9 @@ class TelegramClient:
         proxy = None
         if proxy_host and proxy_port:
             proxy = (ProxyType.SOCKS5, proxy_host, int(proxy_port))
+        session_path = os.path.join(os.path.dirname(__file__), 'session')
         self.client = TelethonClient(
-            'session',
+            session_path,
             self.api_id,
             self.api_hash,
             connection_retries=10,
