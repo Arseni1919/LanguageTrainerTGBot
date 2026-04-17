@@ -7,6 +7,10 @@ api_id = int(os.getenv('TG_API_ID'))
 api_hash = os.getenv('TG_API_HASH')
 phone = os.getenv('TG_PHONE')
 session_file = os.path.join(os.path.dirname(__file__), 'session')
+old_session = session_file + '.session'
+if os.path.exists(old_session):
+    os.remove(old_session)
+    print(f"✓ Deleted old session file: {old_session}")
 print("=== Step 1: Authenticate with Telegram ===")
 client = TelegramClient(session_file, api_id, api_hash)
 async def main():
