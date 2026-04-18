@@ -44,15 +44,11 @@ def start_scheduler(telegram_client):
     global tg_client
     tg_client = telegram_client
     scheduler.add_job(scheduled_fetch_and_post_french, 'cron', hour=8, minute=0, id='morning_french')
-    scheduler.add_job(scheduled_fetch_and_post_french, 'cron', hour=12, minute=0, id='afternoon_french')
-    scheduler.add_job(scheduled_fetch_and_post_french, 'cron', hour=19, minute=0, id='evening_french')
     scheduler.add_job(scheduled_fetch_and_post_arabic, 'cron', hour=9, minute=0, id='morning_arabic')
-    scheduler.add_job(scheduled_fetch_and_post_arabic, 'cron', hour=13, minute=0, id='afternoon_arabic')
-    scheduler.add_job(scheduled_fetch_and_post_arabic, 'cron', hour=20, minute=0, id='evening_arabic')
     scheduler.start()
     print("✓ Scheduler started:")
-    print("  - French: 08:00, 12:00, 19:00 Israel Time")
-    print("  - Arabic: 09:00, 13:00, 20:00 Israel Time")
+    print("  - French: 08:00 Israel Time")
+    print("  - Arabic: 09:00 Israel Time")
 
 def shutdown_scheduler():
     scheduler.shutdown()
