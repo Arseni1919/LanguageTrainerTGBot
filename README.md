@@ -22,6 +22,15 @@ This bot creates an automated pipeline that:
 
 Perfect for intermediate learners who want authentic content with built-in learning support.
 
+## 📺 See It In Action
+
+Check out the live channels to see the bot in action:
+
+- 🇫🇷 **French Learning Channel**: [t.me/calcalist_french](https://t.me/calcalist_french)
+- 🇸🇦 **Arabic Learning Channel**: [t.me/calcalist_arabic](https://t.me/calcalist_arabic)
+
+Daily posts at 08:00 (French) and 09:00 (Arabic) Israel Time with translations, vocabulary, and quizzes!
+
 ## 🛠️ Main Tools
 
 | Tool | Purpose | Why This Choice |
