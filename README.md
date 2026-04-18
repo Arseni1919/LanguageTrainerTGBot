@@ -181,6 +181,8 @@ TG_SESSION_PART2=<long_base64_string_part2>
 TG_SESSION_PART3=<long_base64_string_part3>
 ```
 
+> **⚠️ Note on Session Management:** This session splitting approach is a workaround for Railway's environment variable size limits (32KB per variable). **A better approach** is to use persistent volumes to store the session file directly. The session splitting method works but is less elegant - if your deployment platform supports volumes, use those instead.
+
 ### Step 5: Configure Channels
 
 Edit `config/channels.py` with your channels:
@@ -243,21 +245,22 @@ Each post includes three components:
 
 ### 1. Main Message (Translation + Hidden Content)
 
+**Example (French):**
 ```
-تم اكتشاف نوع جديد من الفراشات في غابات الأمازون المطيرة.
+Des scientifiques ont découvert une nouvelle espèce de papillon dans la forêt amazonienne.
 
 Link: https://example.com/article
 
-المفردات المهمة:
+Vocabulaire important:
 ||
-🦋 فراشة - butterfly
-Example: الفراشة جميلة وملونة
+🦋 papillon - butterfly
+Example: Le papillon est beau et coloré
 
-🌳 غابة - forest
-Example: الغابة كبيرة ومظلمة
+🌳 forêt - forest
+Example: La forêt amazonienne est immense
 ||
 
-النص الأصلي:
+Texte original:
 ||
 Scientists discover new species of butterfly in the Amazon rainforest.
 ||
@@ -271,13 +274,14 @@ Scientists discover new species of butterfly in the Amazon rainforest.
 
 ### 2. Comprehension Quiz (Separate Message)
 
+**Example (French):**
 ```
-ما هو الاكتشاف الجديد في الغابة؟
+Qu'est-ce qui a été découvert dans la forêt amazonienne?
 
-A) نوع جديد من الأشجار
-B) نوع جديد من الفراشات  ✅
-C) نوع جديد من الطيور
-D) نوع جديد من الأزهار
+A) Une nouvelle espèce d'arbre
+B) Une nouvelle espèce de papillon  ✅
+C) Une nouvelle espèce d'oiseau
+D) Une nouvelle espèce de fleur
 ```
 
 **Quiz Format:**
