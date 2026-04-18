@@ -27,37 +27,54 @@ async def repost_message(event):
 
 async def startup_fetch_and_post():
     await asyncio.sleep(2)
-    print("=== STARTUP: Processing and posting latest message to both channels ===")
+    print("=== STARTUP: Processing and posting 10 latest messages to both channels ===")
+    from config.channels import TARGET_CHANNELS
+    source_channel = SOURCE_CHANNELS[0]
     try:
-        from config.channels import TARGET_CHANNELS
-        source_channel = SOURCE_CHANNELS[0]
-        messages = await tg_client.get_channel_messages(source_channel, limit=1)
+        messages = await tg_client.get_channel_messages(source_channel, limit=10)
         if not messages:
             print(f"No messages found in {source_channel}")
             return
-        latest_msg = messages[0]
-        print(f"✓ Fetched startup message id={latest_msg['id']}")
-        print("=== STARTUP: Processing Arabic ===")
-        await process_and_post(
-            tg_client,
-            TARGET_CHANNELS['arabic'],
-            latest_msg['text'],
-            'Arabic',
-            latest_msg.get('media', {}).get('media'),
-            latest_msg.get('links', [])
-        )
-        print("=== STARTUP: Processing French ===")
-        await process_and_post(
-            tg_client,
-            TARGET_CHANNELS['french'],
-            latest_msg['text'],
-            'French',
-            latest_msg.get('media', {}).get('media'),
-            latest_msg.get('links', [])
-        )
-        print(f"✓ Startup posts completed to both channels")
+        print(f"✓ Fetched {len(messages)} messages from {source_channel}")
+        messages.reverse()
+        success_count = 0
+        error_count = 0
+        for idx, msg in enumerate(messages, 1):
+            print(f"\n=== STARTUP: Processing message {idx}/{len(messages)} (id={msg['id']}) ===")
+            try:
+                print("  → Arabic translation")
+                await process_and_post(
+                    tg_client,
+                    TARGET_CHANNELS['arabic'],
+                    msg['text'],
+                    'Arabic',
+                    msg.get('media', {}).get('media'),
+                    msg.get('links', [])
+                )
+                print("  ✓ Arabic posted")
+            except Exception as e:
+                print(f"  ✗ Arabic failed: {e}")
+                error_count += 1
+            try:
+                print("  → French translation")
+                await process_and_post(
+                    tg_client,
+                    TARGET_CHANNELS['french'],
+                    msg['text'],
+                    'French',
+                    msg.get('media', {}).get('media'),
+                    msg.get('links', [])
+                )
+                print("  ✓ French posted")
+                success_count += 1
+            except Exception as e:
+                print(f"  ✗ French failed: {e}")
+                error_count += 1
+            if idx < len(messages):
+                await asyncio.sleep(1)
+        print(f"\n✓ Startup posts completed: {success_count} successful, {error_count} errors")
     except Exception as e:
-        print(f"✗ Startup post failed: {e}")
+        print(f"✗ Startup fetch failed: {e}")
         import traceback
         traceback.print_exc()
 
