@@ -1,150 +1,260 @@
-# Language Trainer Telegram Bot
+# 📚 Language Trainer Telegram Bot
 
-Automated Telegram channel bot that helps users learn Arabic by translating news from Hebrew/English channels into simplified Arabic with vocabulary hints and comprehension quizzes.
+Automated Telegram bot that transforms Hebrew/English news into language learning content for Arabic and French learners.
 
-## Features
+## 🎯 What Problem Does This Solve?
 
-- 📰 Monitors multiple source channels (Hebrew/English)
-- 🔄 Translates content to simplified Arabic using Gemini AI
-- 📚 Provides hidden vocabulary hints with English translations and examples
-- 📝 Posts multiple choice quizzes to test comprehension
-- 🖼️ Forwards media (images, documents) from original posts
-- 🔗 Preserves all links from source content
-- ⏰ Posts 3 times daily via scheduled jobs
+Language learners face a common challenge: **finding authentic content at their skill level**. News articles are perfect for learning because they cover real-world topics, but they're often too complex for beginners.
 
-## Project Structure
+**The Challenge:**
+- 📰 Real news is engaging but overwhelming for learners
+- 📖 Simplified content feels artificial and boring
+- 💭 Learners need vocabulary support without disrupting reading flow
+- 🧠 Comprehension needs to be tested to ensure understanding
+
+**The Solution:**
+This bot creates an automated pipeline that:
+1. Monitors Hebrew/English news channels
+2. Translates content into simplified Arabic and French
+3. Adds hidden vocabulary hints (click to reveal)
+4. Posts comprehension quizzes to test understanding
+5. Schedules daily posts automatically
+
+Perfect for intermediate learners who want authentic content with built-in learning support.
+
+## 🛠️ Main Tools
+
+| Tool | Purpose | Why This Choice |
+|------|---------|-----------------|
+| **FastAPI** | Async web framework | Handles scheduling and webhooks efficiently |
+| **Telethon** | Telegram MTProto client | Full API access for channels, media, polls |
+| **Gemini AI** | Google's generative AI | Powers translation, vocabulary extraction, quiz generation |
+| **APScheduler** | Background job scheduler | Reliable daily posting (08:00 French, 09:00 Arabic) |
+| **Railway** | Cloud deployment platform | Simple deployment with environment variables |
+| **uv** | Python package manager | Fast, modern alternative to pip/venv |
+
+## 🔄 How It Works
+
+```mermaid
+graph LR
+    A[📰 Source Channel<br/>@calcalist] --> B[🤖 Bot Monitor]
+    B --> C{⏰ Schedule<br/>08:00 / 09:00}
+    C --> D[🔍 Fetch Latest Post]
+    D --> E[🌐 Gemini AI]
+    E --> F[📝 Translate to<br/>Simple Language]
+    E --> G[📚 Extract Key<br/>Vocabulary]
+    E --> H[❓ Generate<br/>Comprehension Quiz]
+    F --> I[📱 @calcalist_french<br/>French Channel]
+    F --> J[📱 @calcalist_arabic<br/>Arabic Channel]
+    G --> I
+    G --> J
+    H --> I
+    H --> J
+```
+
+**Daily Flow:**
+1. **08:00 Israel Time** → Bot fetches latest @calcalist post
+2. **Gemini AI** translates to simplified French + extracts vocabulary + generates quiz
+3. **Posts to @calcalist_french** with hidden vocab/original text + quiz
+4. **09:00 Israel Time** → Same process for Arabic → @calcalist_arabic
+
+## 📁 Project Structure
 
 ```
 LanguageTrainerTGBot/
-├── conn_tg/           # Telegram client isolation
-│   ├── client.py      # Telegram wrapper (Telethon)
-│   ├── test.py        # Connection test
-│   └── example.py     # Usage examples
-├── conn_ai/           # AI client isolation
-│   ├── client.py      # Gemini API wrapper
-│   ├── test.py        # AI test
-│   └── example.py     # Usage examples
-├── api/               # FastAPI application
-│   ├── main.py        # Main app & endpoints
-│   └── scheduler.py   # APScheduler jobs
-├── config/
-│   └── channels.py    # Channel configuration
-├── .env.example       # Environment template
-├── .gitignore
-├── requirements.txt
-├── README.md
-└── CLAUDE.md          # Developer guide
+├── 📡 conn_tg/              # Telegram client wrapper
+│   ├── client.py            # TelegramClient class (Telethon)
+│   ├── regenerate_session.py  # Generate new Telegram session
+│   ├── split_session.py     # Split session for Railway env vars
+│   └── test.py              # Test Telegram connection
+│
+├── 🤖 conn_ai/              # AI client wrapper
+│   ├── client.py            # GeminiClient class
+│   └── test.py              # Test AI translation/quiz
+│
+├── 🌐 api/                  # FastAPI application
+│   ├── main.py              # App, endpoints, lifespan management
+│   └── scheduler.py         # APScheduler jobs (morning posts)
+│
+├── 🔧 services/             # Business logic
+│   └── post_processor.py    # Translation, vocabulary, quiz pipeline
+│
+├── ⚙️ config/               # Configuration
+│   └── channels.py          # SOURCE_CHANNELS, TARGET_CHANNELS
+│
+├── 📄 .env.example          # Environment variable template
+├── 📄 pyproject.toml        # uv dependencies
+├── 📄 .gitignore            # Excludes .env, *.session
+└── 📄 README.md             # You are here!
 ```
 
-## Tech Stack
+## 🚀 Getting Started
 
-- **FastAPI** - Modern async web framework
-- **Telethon** - Telegram MTProto API client
-- **Gemini AI** - Google's generative AI for translation
-- **APScheduler** - Background job scheduling
-- **python-dotenv** - Environment variable management
-- **uv** - Fast Python package installer and environment manager
+### Prerequisites
 
-## Setup
+- **Python 3.12+** installed ([python.org](https://www.python.org/downloads/))
+- **Telegram account** with phone number
+- **Google AI account** for Gemini API ([ai.google.dev](https://ai.google.dev/))
+- **Git** installed
 
-### 1. Clone and Install
-
-This project uses `uv` for Python package management.
+### Step 1: Clone and Install
 
 ```bash
+# Clone the repository
 git clone https://github.com/Arseni1919/LanguageTrainerTGBot.git
 cd LanguageTrainerTGBot
+
+# Install dependencies with uv
 uv sync
+
+# Activate virtual environment
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 ```
 
-> **Note**: `uv sync` automatically creates a virtual environment and installs all dependencies from `pyproject.toml`
+> **Note:** `uv sync` automatically creates a virtual environment and installs all dependencies from `pyproject.toml`
 
-### 2. Get API Credentials
+### Step 2: Get API Credentials
 
-**Telegram API:**
+#### Telegram API
+
 1. Go to https://my.telegram.org
 2. Log in with your phone number
-3. Create a new application
-4. Note your `API_ID` and `API_HASH`
+3. Click "API development tools"
+4. Create a new application (any name/description)
+5. Note your **API ID** and **API Hash**
 
-**Gemini API:**
+#### Gemini API
+
 1. Go to https://ai.google.dev/
-2. Create API key
-3. Note your `GEMINI_API_KEY`
+2. Click "Get API key in Google AI Studio"
+3. Create a new API key
+4. Copy your **Gemini API Key**
 
-### 3. Configure Environment
+### Step 3: Configure Environment
 
 ```bash
+# Copy template
 cp .env.example .env
+
+# Edit .env with your favorite editor
+nano .env  # or vim, code, etc.
 ```
 
-Edit `.env` and fill in:
+Fill in your credentials:
 ```env
-TG_API_ID=your_api_id
-TG_API_HASH=your_api_hash
-TG_PHONE=your_phone_number
-GEMINI_API_KEY=your_gemini_api_key
-TARGET_CHANNEL_ID=@your_channel
+TG_API_ID=your_api_id_here
+TG_API_HASH=your_api_hash_here
+TG_PHONE=+1234567890
+GEMINI_API_KEY=your_gemini_key_here
+
+# Session parts (generate in step 4)
+TG_SESSION_PART1=
+TG_SESSION_PART2=
+TG_SESSION_PART3=
+
+# Optional: SOCKS5 proxy if behind firewall
+PROXY_HOST=
+PROXY_PORT=
 ```
 
-### 4. Configure Channels
+### Step 4: Generate Telegram Session
 
-Edit `config/channels.py`:
-```python
-SOURCE_CHANNELS = [
-    '@hebrew_news_channel',
-    '@english_news_channel',
-]
-TARGET_CHANNEL_ID = '@your_arabic_learning_channel'
-```
-
-## Usage
-
-### Test Individual Components
+The bot needs an authenticated Telegram session to access channels.
 
 ```bash
 cd conn_tg
-uv run python test.py
 
-cd ../conn_ai
-uv run python test.py
+# Generate session (you'll receive a Telegram code)
+uv run python regenerate_session.py
+# Enter the code from Telegram on your phone
+
+# Split session into 3 parts for Railway
+uv run python split_session.py
+
+cd ..
 ```
 
-### Run API Server
+The script will output three parts. Add them to your `.env`:
+```env
+TG_SESSION_PART1=<long_base64_string_part1>
+TG_SESSION_PART2=<long_base64_string_part2>
+TG_SESSION_PART3=<long_base64_string_part3>
+```
+
+### Step 5: Configure Channels
+
+Edit `config/channels.py` with your channels:
+
+```python
+SOURCE_CHANNELS = [
+    '@calcalist',  # or your news source channel
+]
+
+TARGET_CHANNELS = {
+    'arabic': '@your_arabic_channel',
+    'french': '@your_french_channel'
+}
+```
+
+> **Note:** You must be an admin of the target channels or have posting permissions.
+
+### Step 6: Test Components
 
 ```bash
+# Test Telegram connection
+cd conn_tg
+uv run python test.py
+# Should show: ✓ Logged in as: Your Name
+
+# Test AI translation
+cd ../conn_ai
+uv run python test.py
+# Should show: ✓ Translation successful
+
+cd ..
+```
+
+### Step 7: Run Locally
+
+```bash
+# Start the FastAPI server
 uv run uvicorn api.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### Test Endpoints
-
-```bash
-curl http://localhost:8000/health
-curl http://localhost:8000/
+**Expected output:**
+```
+✓ Telegram client connected
+✓ Listening for new messages in ['@calcalist']
+✓ Scheduler started:
+  - French: 08:00 Israel Time
+  - Arabic: 09:00 Israel Time
 ```
 
-## Post Format
+**Test the manual endpoint:**
+```bash
+curl -X POST http://localhost:8000/fetch-and-post
+```
 
-Each post includes:
+This fetches the latest post and translates it to both channels immediately.
 
-1. **Arabic Translation** (simplified for learners)
-2. **Vocabulary Hints** (hidden with spoiler)
-   - Key words with English translations
-   - Example sentences
-   - Emojis for visual learning
-3. **Original Text** (hidden with spoiler)
-4. **Follow-up Quiz** (separate message with inline buttons)
+## 📝 Post Format
 
-Example:
+Each post includes three components:
+
+### 1. Main Message (Translation + Hidden Content)
+
 ```
 تم اكتشاف نوع جديد من الفراشات في غابات الأمازون المطيرة.
+
+Link: https://example.com/article
 
 المفردات المهمة:
 ||
 🦋 فراشة - butterfly
 Example: الفراشة جميلة وملونة
-...
+
+🌳 غابة - forest
+Example: الغابة كبيرة ومظلمة
 ||
 
 النص الأصلي:
@@ -153,84 +263,168 @@ Scientists discover new species of butterfly in the Amazon rainforest.
 ||
 ```
 
-## Development
+**Features:**
+- ✅ Simplified translation at the top (easy to read)
+- 🔒 Hidden vocabulary (click/tap to reveal)
+- 🔒 Hidden original text (for reference)
+- 🔗 Preserved links from source
 
-See [CLAUDE.md](CLAUDE.md) for detailed development guide and implementation phases.
+### 2. Comprehension Quiz (Separate Message)
 
-### Current Status
+```
+ما هو الاكتشاف الجديد في الغابة؟
 
-- ✅ Phase 1: TG Connection
-- ✅ Phase 2: AI Connection
-- ✅ Phase 3: API Basic Setup
-- ✅ Phase 4: API + TG Integration (Basic repost from @calcalist)
-- ⏳ Phase 5: Full Pipeline (Translation + Quiz)
-- ⏳ Phase 6: Fine-tuning
-- ✅ Phase 7: Deployment (Railway ready)
+A) نوع جديد من الأشجار
+B) نوع جديد من الفراشات  ✅
+C) نوع جديد من الطيور
+D) نوع جديد من الأزهار
+```
 
-## Deployment
+**Quiz Format:**
+- Multiple choice (4 options)
+- Tests actual comprehension
+- Instant feedback on selection
 
-### Railway Deployment
+## 🌐 Deployment
 
-1. **Connect GitHub Repository**
-   - Go to [Railway](https://railway.app/)
-   - Create new project from GitHub repo
-   - Select `Arseni1919/LanguageTrainerTGBot`
+### Deploy to Railway
 
-2. **Add Environment Variables**
+Railway provides easy deployment with automatic CI/CD from GitHub.
 
-   In Railway dashboard, add these variables:
-   ```
-   TG_API_ID=your_api_id
-   TG_API_HASH=your_api_hash
-   TG_PHONE=+972XXXXXXXXX
-   TARGET_CHANNEL_ID=@your_channel
-   ```
+#### 1. Connect Repository
 
-   **Important**: Don't add `TG_SESSION_STRING` - session is too large for Railway env vars.
+1. Go to [Railway](https://railway.app/)
+2. Sign up/login with GitHub
+3. Click "New Project" → "Deploy from GitHub repo"
+4. Select `Arseni1919/LanguageTrainerTGBot`
 
-3. **Deploy**
-   - Railway auto-deploys on push to main
-   - Wait for deployment to complete
+#### 2. Add Environment Variables
 
-4. **Authenticate on Railway (One-time)**
+In Railway dashboard, go to your service → Variables tab. Add all variables from your `.env`:
 
-   Open Railway Shell:
-   - Click your service → Shell tab
-   - Run:
-   ```bash
-   cd conn_tg
-   python simple_test.py
-   ```
-   - Enter the code from your Telegram app
-   - Session file will be saved on Railway
-   - Exit shell
+```
+TG_API_ID=your_api_id
+TG_API_HASH=your_api_hash
+TG_PHONE=+1234567890
+TG_SESSION_PART1=<your_part1>
+TG_SESSION_PART2=<your_part2>
+TG_SESSION_PART3=<your_part3>
+GEMINI_API_KEY=your_gemini_key
+```
 
-5. **Restart Service**
-   - Go back to Deployments
-   - Click "Restart"
-   - App will now use the saved session
+Optional proxy variables:
+```
+PROXY_HOST=your_proxy_host
+PROXY_PORT=your_proxy_port
+```
 
-6. **Test the Endpoint**
-   ```bash
-   curl -X POST https://your-app.railway.app/fetch-and-post
-   ```
+> **Important:** Do NOT add `TARGET_CHANNEL_ID` - channels are configured in `config/channels.py`
 
-   This fetches the latest post from @calcalist and posts to your channel.
+#### 3. Deploy
 
-5. **Check Logs**
-   - View logs in Railway dashboard to verify deployment
+Railway auto-deploys when you push to `main` branch:
+
+```bash
+git push origin main
+```
+
+Watch deployment logs in Railway dashboard.
+
+#### 4. Verify Deployment
+
+Check logs for successful startup:
+```
+✓ Session file restored
+✓ Logged in as: Your Name (your_username)
+✓ Listening for new messages in ['@calcalist']
+✓ Scheduler started:
+  - French: 08:00 Israel Time
+  - Arabic: 09:00 Israel Time
+```
+
+**Test the endpoint:**
+```bash
+curl -X POST https://your-app.railway.app/fetch-and-post
+```
+
+Check your Telegram channels - you should see new posts!
 
 ### Other Platforms
 
-See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed deployment guides for Render, Fly.io, and Docker.
+The app works on any platform that supports:
+- Python 3.12+
+- Environment variables
+- Long-running processes
 
-## Contributing
+Tested on: **Railway**, **Render**, **Fly.io**, **Docker**
 
-1. Follow the implementation phases in CLAUDE.md
-2. Test components in isolation before integration
-3. Update README when adding new features
-4. Keep code minimal and clean (no comments, no empty lines in functions)
+See `DEPLOYMENT.md` for detailed guides for other platforms.
 
-## License
+## 📖 Usage
 
-MIT
+### Manual Posting
+
+```bash
+curl -X POST https://your-app.railway.app/fetch-and-post
+```
+
+Posts immediately to both channels (Arabic + French).
+
+### Scheduled Posting
+
+Automatic posts happen daily:
+- **08:00 Israel Time** → French (@calcalist_french)
+- **09:00 Israel Time** → Arabic (@calcalist_arabic)
+
+No manual intervention needed!
+
+### Auto-Repost on New Messages
+
+The bot monitors `SOURCE_CHANNELS` for new posts. When a new message is detected, it automatically:
+1. Translates to both languages
+2. Posts to both channels
+3. Includes vocabulary and quiz
+
+This ensures your channels stay up-to-date in real-time.
+
+## 🤝 Contributing
+
+Contributions are welcome! Here's how to get started:
+
+1. **Fork the repository**
+2. **Create a feature branch** (`git checkout -b feature/amazing-feature`)
+3. **Test your changes** locally
+4. **Commit your changes** (`git commit -m 'Add amazing feature'`)
+5. **Push to your branch** (`git push origin feature/amazing-feature`)
+6. **Open a Pull Request**
+
+### Development Guidelines
+
+- Keep code minimal and clean (no unnecessary comments)
+- Test components in isolation before integration
+- Follow existing code structure (conn_tg, conn_ai, services)
+- Update CLAUDE.md if you change architecture
+
+## 📚 Additional Documentation
+
+- **CLAUDE.md** - Detailed development guide and architecture
+- **DEPLOYMENT.md** - Platform-specific deployment guides
+- **RAILWAY_SETUP.md** - Railway deployment specifics
+- **QUIZ_POLL_REFERENCE.md** - Telegram quiz poll implementation reference
+
+## 📄 License
+
+MIT License - see LICENSE file for details
+
+## 🙏 Acknowledgments
+
+- **Telethon** - Excellent Telegram client library
+- **Google Gemini** - Powerful AI for translation and content generation
+- **FastAPI** - Modern, fast web framework
+- **Railway** - Simple deployment platform
+
+---
+
+**Built with ❤️ for language learners**
+
+Happy learning! 🎓
