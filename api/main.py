@@ -85,7 +85,7 @@ async def lifespan(app: FastAPI):
     await tg_client.connect()
     tg_client.add_new_message_handler(repost_message, SOURCE_CHANNELS)
     print(f"✓ Listening for new messages in {SOURCE_CHANNELS}")
-    start_scheduler(tg_client)
+    # start_scheduler(tg_client)  # Disabled - scheduled jobs stopped
     # asyncio.create_task(startup_fetch_and_post())  # Disabled - channels already populated
     yield
     await tg_client.disconnect()
